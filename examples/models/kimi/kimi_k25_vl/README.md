@@ -78,6 +78,13 @@ See [slurm_inference.sh](slurm_inference.sh) for configuration details.
 
 Note:
 - `--trust_remote_code` is required for Kimi-K2.5 models.
+- The shared generation script recomputes the full prefix without a KV cache and
+  gathers only the final token's logits across tensor-parallel ranks. For Kimi,
+  this Bridge legacy-prefix loop uses the fixed-shape `allgather` MoE dispatcher
+  and disables shared-expert overlap and MoE permute fusion. This supports
+  expert ranks that receive no routed tokens while using that dispatcher.
+  Provider and training defaults remain unchanged. This does not change the
+  prompt or generation token budget.
 - Use `--pp_layout` to specify custom pipeline layouts (e.g.
   `--pp_layout "Et*15|t*15|t*16|t*15L"` for PP=4).
 - You can optionally pass `--megatron_model_path` to use a pre-converted

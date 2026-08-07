@@ -16,6 +16,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import torch
+from megatron.core.models.gpt.gpt_layer_specs import get_gpt_decoder_block_spec
 from transformers.configuration_utils import PretrainedConfig
 
 from megatron.bridge.models.conversion.auto_bridge import AutoBridge
@@ -175,6 +176,8 @@ class TestKimiK25VLBridgeProviderBridge:
         assert provider.moe_router_topk == 8
         assert provider.moe_router_score_function == "sigmoid"
         assert provider.moe_router_enable_expert_bias is True
+        assert provider.moe_grouped_gemm is True
+        assert provider.transformer_layer_spec.func is get_gpt_decoder_block_spec
 
     def test_provider_bridge_moe_layer_freq(self, kimi_bridge, mock_hf_pretrained):
         """Test MoE layer frequency computation."""
