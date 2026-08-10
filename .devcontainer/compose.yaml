@@ -1,0 +1,53 @@
+name: minimind-megatron-bridge
+
+services:
+  dev:
+    image: nvcr.io/nvidia/nemo:26.06@sha256:912033288c982a8c4af05df46a1d670c34350f1427c758f5da9c485bdec57264
+    pull_policy: missing
+
+    working_dir: /opt/Megatron-Bridge
+    command: ["bash", "-lc", "sleep infinity"]
+    init: true
+    stdin_open: true
+    tty: true
+
+    shm_size: 8gb
+    ulimits:
+      memlock: -1
+      stack: 67108864
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    environment:
+      PYTHONPATH: /opt/Megatron-Bridge/src:/opt/Megatron-Bridge/3rdparty/Megatron-LM
+      HF_HOME: /data/hf
+      XDG_CACHE_HOME: /data/cache
+      UV_CACHE_DIR: /data/cache/uv
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+      TOKENIZERS_PARALLELISM: "false"
+      PYTHONUNBUFFERED: "1"
+      MINIMIND_NEMO_IMAGE: nvcr.io/nvidia/nemo:26.06@sha256:912033288c982a8c4af05df46a1d670c34350f1427c758f5da9c485bdec57264
+      MINIMIND_BRIDGE_SOURCE_TAG: v0.5.1
+
+    volumes:
+      - ..:/opt/Megatron-Bridge
+      - hf-cache:/data/hf
+      - dataset-cache:/data/datasets
+      - checkpoint-cache:/data/checkpoints
+      - run-cache:/data/runs
+      - generic-cache:/data/cache
+      - vendor-cache:/opt/vendor
+
+volumes:
+  hf-cache:
+  dataset-cache:
+  checkpoint-cache:
+  run-cache:
+  generic-cache:
+  vendor-cache:

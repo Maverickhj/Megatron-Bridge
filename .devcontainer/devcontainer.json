@@ -1,0 +1,28 @@
+{
+  "name": "MiniMind Megatron Bridge",
+  "dockerComposeFile": "compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/opt/Megatron-Bridge",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "root",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "tests"
+        ]
+      }
+    }
+  },
+  "postCreateCommand": "git submodule update --init --recursive && if grep -Eqi '(microsoft|wsl)' /proc/sys/kernel/osrelease; then git -C 3rdparty/Megatron-LM config core.filemode false && git config submodule.3rdparty/Megatron-LM.ignore dirty; fi && chmod +x scripts/run_detected.sh",
+  "postStartCommand": "uv run --no-sync python .devcontainer/detect_runtime.py --output .devcontainer/generated/runtime.json && uv run --no-sync python .devcontainer/verify_env.py --runtime .devcontainer/generated/runtime.json --output .devcontainer/generated/verification.json",
+  "postAttachCommand": "uv run --no-sync python -m json.tool .devcontainer/generated/runtime.json"
+}

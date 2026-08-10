@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "nemo_image": {
+    "reference": "nvcr.io/nvidia/nemo:26.06",
+    "multi_arch_digest": "sha256:912033288c982a8c4af05df46a1d670c34350f1427c758f5da9c485bdec57264",
+    "linux_amd64_digest": "sha256:c6c64a07935c2765a8f42811b4baefa675aaaa324c9ed9e1901332816bb89bae",
+    "linux_arm64_digest": "sha256:6ecd3aaf8f8fe8dfa2c2320d22df989d9a0613f97b0f42ca551e869d037258cf"
+  },
+  "source": {
+    "megatron_bridge_tag": "v0.5.1",
+    "megatron_bridge_commit": "5cb3444c43f7499cf3872b2d46870cf8bc2e00ce",
+    "megatron_lm_commit": "458c8d0ecafdf6d9e36771600d62ade27f2a67b7"
+  },
+  "container_software": {
+    "python": "3.12.3",
+    "pytorch": "2.12.0a0+0291f960b6.nv26.04.48445190",
+    "cuda_runtime": "13.2",
+    "transformer_engine": "2.16.0+b9d690e0",
+    "transformers": "5.8.1"
+  },
+  "minimind_v": {
+    "commit": "TBD",
+    "hugging_face_checkpoint_revision": "TBD",
+    "tokenizer_revision": "TBD",
+    "processor_revision": "TBD"
+  }
+}
