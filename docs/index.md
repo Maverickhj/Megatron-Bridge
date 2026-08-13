@@ -97,6 +97,7 @@ modelopt/pruning.md
 
 adding-new-models.md
 bridge-rl-integration.md
+development-container.md
 documentation.md
 apidocs/index.rst
 ```

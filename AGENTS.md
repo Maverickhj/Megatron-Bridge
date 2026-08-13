@@ -1,112 +1,49 @@
-# AGENTS.md — Megatron Bridge
+# AGENTS.md — Megatron Bridge (Personal Learning)
 
-> **Project:** PyTorch-native bridge between Hugging Face and Megatron-Core.
-> Bidirectional checkpoint conversion, pretraining, SFT, and LoRA recipes
-> with optimized NVIDIA GPU performance. Package: `megatron.bridge` (Python 3.12).
+个人学习用途的精简说明。完整项目规范见 `AGENTS.md.bkp`。
 
-## Skills
+## Project map
+- Package: `megatron.bridge`; Python 3.12.
+- HF <-> Megatron bridge code: `src/megatron/bridge/`.
+- Per-model family:
+  - `models/<family>/bridge.py`: HF <-> Megatron conversion
+  - `models/<family>/config_mapping.py`: HF config -> Megatron config
+  - `models/<family>/param_mapping.py`: parameter name mapping
+  - `models/<family>/hf_pretrained/`: HF model definitions
+  - `recipes/<family>/`: pretraining/SFT/LoRA recipes
+- `AutoBridge`: `models/conversion/auto_bridge.py`, selects bridge from HF model name/path.
+- Megatron-LM submodule: `3rdparty/Megatron-LM/`.
 
-The `skills/` directory contains structured guides for common tasks (adding
-models, running experiments, debugging multi-node jobs, performance tuning,
-etc.). **Always read the relevant `SKILL.md` before starting any task it
-covers — skills are mandatory context, not optional background reading.**
+## Focus areas
+- Integrate small models.
+- Run the pipeline end-to-end and trace the code path, including Megatron-LM.
+- Make small functional changes: scheduling, operators.
+- Profile with available tools.
 
-**Workflow — mandatory order for every task:**
-1. **Pull information first.** Read the commit, PR, error log, file, or
-   whatever artifact the task is about. Do not reason about it yet.
-2. **Select and invoke the skill.** Based on what you just read, identify
-   the relevant skill and invoke it before forming any answer or plan.
-3. **Answer or implement.** Only after the skill is loaded, use its context
-   to reason, diagnose, or write code.
+## Common commands
+- `uv sync`
+- `uv sync --group dev`
+- `uv run python -m pytest tests/unit_tests/...`
+- `uv run python -m torch.distributed.run --nproc_per_node=2 script.py`
+- `uv run pre-commit run --all-files` (optional)
+- `uv run mypy --strict path/to/file.py`
+- `git submodule update --init`
 
-Never skip or reorder these steps. Do not wait for the user to name the right
-skill keyword — infer it from the artifact you read.
+## Relevant skills (read as needed)
+- Model integration: `skills/adding-model-support/SKILL.md`
+- Training pipeline: `skills/nemo-mbridge-mlm-bridge-training/SKILL.md`
+- Environment: `skills/build-and-dependency/SKILL.md`
+- Testing: `skills/testing/SKILL.md`
+- Perf/profiling:
+  - `skills/nemo-mbridge-perf-parallelism-strategies/SKILL.md`
+  - `skills/nemo-mbridge-perf-tp-dp-comm-overlap/SKILL.md`
+  - `skills/nemo-mbridge-perf-cuda-graphs/SKILL.md`
+  - `skills/nemo-mbridge-perf-activation-recompute/SKILL.md`
+  - `skills/nemo-mbridge-perf-memory-tuning/SKILL.md`
+  - `skills/nemo-mbridge-perf-moe-*/SKILL.md` (if working on MoE)
 
-## Boundaries
-
-**NEVER:**
-- Modify files inside `3rdparty/Megatron-LM/` — changes go through the upstream repo
-- Run the full test suite — run only the specific tests relevant to your change
-- Add required (non-optional) dependencies — use optional extras; submit dependency changes as a separate PR
-- Commit secrets, tokens, `.env` files, or environment-specific paths / account names (e.g. `/home/yuya/…`, usernames, cluster hostnames)
-- Use bare `print()` — use `logging.getLogger(__name__)` or `print_rank_0()`
-
-**ASK FIRST:**
-- Before adding any new dependency to `pyproject.toml`
-- Before modifying CI workflows (`.github/workflows/`)
-- Before changing public API signatures in `models/conversion/`
-
-**ALWAYS:**
-- Run `uv run pre-commit run --all-files` before committing
-- Add NVIDIA copyright headers to new Python files (except under `tests/`)
-- Sign off commits: `git commit -s -m "message"`
-- Use `uv run python -m pytest` and `uv run python -m torch.distributed.run`, not bare `pytest` / `torchrun`
-- Use the current year (2026) in generated content — do not default to 2025 or any past year
-
-## Toolchain
-
-| Action | Command | Config |
-|--------|---------|--------|
-| Install deps | `uv sync` | `pyproject.toml`, `uv.lock` |
-| Install dev tools | `uv sync --group dev` | |
-| Lint + format | `uv run pre-commit run --all-files` | `ruff.toml`, `.pre-commit-config.yaml` |
-| Unit tests | `uv run python -m pytest tests/unit_tests/` | `pyproject.toml [tool.pytest]` |
-| Distributed run | `uv run python -m torch.distributed.run --nproc_per_node=2 script.py` | |
-| Type check | `uv run mypy --strict path/to/file.py` | |
-| Regen lock file | `uv lock` | |
-| Init submodule | `git submodule update --init` | `.gitmodules` |
-
-## Code Style
-
-Lint and format are enforced by pre-commit hooks (ruff). See @ruff.toml for
-the authoritative rules. For judgment calls not covered by tooling, see
-@skills/linting-and-formatting/SKILL.md. Key points the linter cannot catch:
-
-- Type hints required on all public API functions (`X | None`, not `Optional[X]`)
-- Google-style docstrings on public classes and functions
-- Use `*` separator for functions with multiple same-type parameters
-- No arbitrary defaults for config values — be explicit
-
-## Testing
-
-- **No foreign `setattr` on config dataclasses in tests.** When a test applies overrides to a recipe config via `setattr(config_obj, key, value)`, always guard with `if not hasattr(config_obj, key): raise ValueError(...)` first. Setting an attribute that does not exist on the dataclass silently creates a phantom field — the test passes but the recipe would fail for a real user who never sets that key. This applies to all override patterns (`model_overrides`, `checkpoint_overrides`, `config_overrides`, etc.) in `tests/functional_tests/`.
-
-## Contributing
-
-See @CONTRIBUTING.md for the full contributor guide, including:
-
-- Commit and PR title format ([Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `<type>(<scope>): <description>`)
-- PR labeling taxonomy (type, area, state, risk labels)
-- Testing conventions (unit preferred, functional max 2 GPUs, L0/L1/L2 tiers)
-- Dependency management policy
-- DCO sign-off requirements
-- CI triggering (`/ok to test <commit-SHA>`)
-
-## Architecture
-
-### Bridge Pattern
-
-Each supported model family lives under `src/megatron/bridge/models/<family>/` with:
-
-| File | Role |
-|------|------|
-| `bridge.py` | HF ↔ Megatron conversion logic |
-| `config_mapping.py` | Maps HF config → Megatron config |
-| `param_mapping.py` | Maps parameter names between formats |
-| `hf_pretrained/` | HF model definition provider |
-
-Recipes live in `src/megatron/bridge/recipes/<family>/`.
-
-`AutoBridge` (`models/conversion/auto_bridge.py`) auto-selects the correct
-bridge from a HF model name or path.
-
-### Megatron-Core Submodule
-
-`3rdparty/Megatron-LM/` is a git submodule pinned to a specific commit,
-installed as an editable package via `[tool.uv.sources]` in `pyproject.toml`.
-Use `scripts/switch_mcore.sh` to switch versions.
-
-## Tool Compatibility
-
-This file is the single source of agent instructions. For Claude Code
-compatibility, create a symlink: `ln -s AGENTS.md CLAUDE.md`
+## Working rules
+- Prefer reading Megatron-LM code before editing the submodule; avoid direct changes if possible.
+- Use `logging.getLogger(__name__)` / `print_rank_0()` instead of bare `print()`.
+- Run only tests related to the current change.
+- Don't commit secrets, `.env`, or personal paths.

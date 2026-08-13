@@ -22,7 +22,7 @@
       }
     }
   },
-  "postCreateCommand": "git submodule update --init --recursive && if grep -Eqi '(microsoft|wsl)' /proc/sys/kernel/osrelease; then git -C 3rdparty/Megatron-LM config core.filemode false && git config submodule.3rdparty/Megatron-LM.ignore dirty; fi && chmod +x scripts/run_detected.sh",
-  "postStartCommand": "uv run --no-sync python .devcontainer/detect_runtime.py --output .devcontainer/generated/runtime.json && uv run --no-sync python .devcontainer/verify_env.py --runtime .devcontainer/generated/runtime.json --output .devcontainer/generated/verification.json",
+  "postCreateCommand": "bash .devcontainer/post_create.sh",
+  "postStartCommand": "bash .devcontainer/post_start.sh",
   "postAttachCommand": "uv run --no-sync python -m json.tool .devcontainer/generated/runtime.json"
 }
