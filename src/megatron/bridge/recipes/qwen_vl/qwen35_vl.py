@@ -22,10 +22,16 @@ This module provides pretrain, SFT, and PEFT configurations for Qwen3.5-VL model
 
 from __future__ import annotations
 
+from typing import Optional
+
 import torch
 from typing_extensions import Unpack
 
 from megatron.bridge import AutoBridge
+from megatron.bridge.data.vlm_datasets import (
+    MockVLMConversationProvider,
+    PreloadedVLMConversationProvider,
+)
 from megatron.bridge.peft.base import PEFT
 from megatron.bridge.recipes.common import _peft_common_vlm, _sft_common_vlm
 from megatron.bridge.recipes.qwen_vl.qwen3_vl import Qwen3VLCommonKwargs, _qwen3_vl_common
@@ -290,6 +296,86 @@ def qwen35_vl_800m_sft_config(hf_path: str = "Qwen/Qwen3.5-0.8B") -> ConfigConta
     """
     cfg = _sft_common_vlm()
     _qwen35_vl_apply_common(cfg, hf_path, tp=1, pp=1, max_lr=5e-6, min_lr=5e-7)
+    return cfg
+
+
+def qwen35_vl_800m_sft_smoke_config(
+    hf_path: str = "Qwen/Qwen3.5-0.8B",
+    *,
+    train_data_path: Optional[str] = None,
+    image_folder: Optional[str] = None,
+    seq_length: int = 256,
+    train_iters: int = 2,
+    global_batch_size: int = 1,
+    micro_batch_size: int = 1,
+    num_images: int = 1,
+    eval_iters: int = 0,
+) -> ConfigContainer:
+    """Return a deterministic smoke SFT config for Qwen3.5-VL 800M.
+
+    This is intentionally the smallest useful SFT path:
+
+    - TP=1, PP=1, GBS=MBS=1, and a short sequence length;
+    - a couple of training iterations only;
+    - no evaluation or mid-run checkpoint;
+    - synthetic mock data by default, or a local one/few-sample JSON/JSONL
+      file when ``train_data_path`` is provided.
+
+    Args:
+        hf_path: HuggingFace model ID or local path to the model directory.
+        train_data_path: Optional local JSON/JSONL file. When set, uses
+            :class:`PreloadedVLMConversationProvider`; otherwise uses
+            :class:`MockVLMConversationProvider`.
+        image_folder: Optional image root for relative paths in preloaded data.
+        seq_length: Model and dataset sequence length.
+        train_iters: Number of smoke training iterations.
+        global_batch_size: Global batch size, pinned to 1 by default.
+        micro_batch_size: Micro batch size, pinned to 1 by default.
+        num_images: Number of synthetic images per mock sample.
+        eval_iters: Validation iterations; 0 disables validation.
+    """
+    cfg = _sft_common_vlm()
+    _qwen35_vl_apply_common(cfg, hf_path, tp=1, pp=1, max_lr=5e-6, min_lr=5e-7)
+
+    cfg.model.seq_length = seq_length
+    cfg.train.train_iters = train_iters
+    cfg.train.global_batch_size = global_batch_size
+    cfg.train.micro_batch_size = micro_batch_size
+
+    cfg.validation.eval_iters = eval_iters
+    cfg.validation.eval_interval = train_iters + 1
+    cfg.checkpoint.save_interval = train_iters + 1
+    cfg.checkpoint.save = None
+    cfg.logger.log_interval = 1
+
+    if train_data_path is not None:
+        cfg.dataset = PreloadedVLMConversationProvider(
+            seq_length=seq_length,
+            hf_processor_path=hf_path,
+            train_data_path=train_data_path,
+            valid_data_path=None,
+            test_data_path=None,
+            image_folder=image_folder,
+            dataloader_type="single",
+            num_workers=1,
+            pack_sequences_in_batch=False,
+        )
+    else:
+        cfg.dataset = MockVLMConversationProvider(
+            seq_length=seq_length,
+            hf_processor_path=hf_path,
+            prompt="Describe this image.",
+            num_images=num_images,
+            num_workers=1,
+            dataloader_type="single",
+            data_sharding=True,
+            pin_memory=True,
+            persistent_workers=False,
+            create_attention_mask=True,
+            pad_to_max_length=True,
+            pack_sequences_in_batch=False,
+        )
+
     return cfg
 
 

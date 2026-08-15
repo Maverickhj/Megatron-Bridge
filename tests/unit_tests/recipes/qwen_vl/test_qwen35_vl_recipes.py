@@ -223,6 +223,44 @@ def test_qwen35_vl_800m_peft_defaults(monkeypatch: pytest.MonkeyPatch):
     assert cfg.optimizer.lr == 1e-4
 
 
+def test_qwen35_vl_800m_sft_smoke_defaults(monkeypatch: pytest.MonkeyPatch):
+    """Smoke SFT should default to mock data with the smallest training loop."""
+    monkeypatch.setattr(_qwen35_vl_module, "AutoBridge", _FakeAutoBridge)
+
+    from megatron.bridge.data.vlm_datasets.mock_provider import MockVLMConversationProvider
+
+    cfg = _qwen35_vl_module.qwen35_vl_800m_sft_smoke_config()
+
+    _assert_basic_config(cfg)
+    assert isinstance(cfg.dataset, MockVLMConversationProvider)
+    assert cfg.model.tensor_model_parallel_size == 1
+    assert cfg.model.pipeline_model_parallel_size == 1
+    assert cfg.train.train_iters == 2
+    assert cfg.train.global_batch_size == 1
+    assert cfg.train.micro_batch_size == 1
+    assert cfg.validation.eval_iters == 0
+    assert cfg.checkpoint.save is None
+    assert cfg.peft is None
+
+
+def test_qwen35_vl_800m_sft_smoke_preloaded(monkeypatch: pytest.MonkeyPatch):
+    """Smoke SFT should switch to preloaded JSON data when a path is supplied."""
+    monkeypatch.setattr(_qwen35_vl_module, "AutoBridge", _FakeAutoBridge)
+
+    from megatron.bridge.data.vlm_datasets.preloaded_provider import PreloadedVLMConversationProvider
+
+    cfg = _qwen35_vl_module.qwen35_vl_800m_sft_smoke_config(
+        train_data_path="/tmp/qwen35vl_smoke.json",
+        image_folder="/tmp/qwen35vl_images",
+    )
+
+    assert isinstance(cfg.dataset, PreloadedVLMConversationProvider)
+    assert cfg.dataset.train_data_path == "/tmp/qwen35vl_smoke.json"
+    assert cfg.dataset.image_folder == "/tmp/qwen35vl_images"
+    assert cfg.train.global_batch_size == 1
+    assert cfg.train.micro_batch_size == 1
+
+
 # ---------------------------------------------------------------------------
 # 2B dense defaults
 # ---------------------------------------------------------------------------
