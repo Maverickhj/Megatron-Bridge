@@ -1,0 +1,4 @@
+interface:
+  display_name: "Megatron-Bridge AI-Infra Sync"
+  short_description: "Sync curated Megatron-Bridge docs to AI-Infra Inbox"
+  default_prompt: "Use $megatron-bridge-ai-infra-sync to review and stage Megatron-Bridge docs into the AI-Infra Inbox after confirming the plan with me."
