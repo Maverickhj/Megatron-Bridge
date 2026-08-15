@@ -1,0 +1,28 @@
+{
+  "inbox_dir": "01_Inbox",
+  "note_prefix": "Megatron-Bridge - ",
+  "items": [
+    {
+      "source": "docs/debug/megatron-lm 链路可观测性 roadmap.md",
+      "target": "10_Projects/Megatron-Bridge/Notes/"
+    },
+    {
+      "source": "docs/debug/qwen3.5 vl 链路观测指南.md",
+      "target": "10_Projects/Megatron-Bridge/Notes/"
+    },
+    {
+      "source": "docs/debug/qwen35-vl-800m-sft-memory.md",
+      "target": "10_Projects/Megatron-Bridge/Experiments/"
+    },
+    {
+      "source": "docs/debug/megatron-bridge-estimator-count-parameters.md",
+      "target": "20_Knowledge/"
+    }
+  ],
+  "excluded": [
+    {
+      "source": "docs/debug/qwen35-vl-800m-sft-smoke.md",
+      "reason": "按约定留在 Megatron-Bridge，不进入 AI-Infra"
+    }
+  ]
+}
